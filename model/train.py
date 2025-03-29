@@ -7,7 +7,7 @@ import torch.nn as nn
 import datetime
 import time
 import matplotlib.pyplot as plt
-from torchinfo import summary
+# from torchinfo import summary
 import yaml
 import json
 import sys
@@ -37,7 +37,8 @@ def eval_model(model, valset_loader, criterion):
         y_batch = y_batch.to(DEVICE)
 
         out_batch = model(x_batch)
-        out_batch = SCALER.inverse_transform(out_batch)
+        SCALER.to_device(DEVICE)
+        out_batch = SCALER.inverse_transform(out_batch, )
         loss = criterion(out_batch, y_batch)
         batch_loss_list.append(loss.item())
 
@@ -55,6 +56,7 @@ def predict(model, loader):
         y_batch = y_batch.to(DEVICE)
 
         out_batch = model(x_batch)
+        SCALER.to_device(DEVICE)
         out_batch = SCALER.inverse_transform(out_batch)
 
         out_batch = out_batch.cpu().numpy()
@@ -79,6 +81,7 @@ def train_one_epoch(
         x_batch = x_batch.to(DEVICE)
         y_batch = y_batch.to(DEVICE)
         out_batch = model(x_batch)
+        SCALER.to_device(DEVICE)
         out_batch = SCALER.inverse_transform(out_batch)
 
         loss = criterion(out_batch, y_batch)
@@ -220,7 +223,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     seed = torch.randint(1000, (1,)) # set random seed here
-    seed_everything(seed)
+    seed_everything(seed.detach().item())
     set_cpu_num(1)
 
     GPU_ID = args.gpu_num
@@ -303,19 +306,19 @@ if __name__ == "__main__":
     print_log(
         json.dumps(cfg, ensure_ascii=False, indent=4, cls=CustomJSONEncoder), log=log
     )
-    print_log(
-        summary(
-            model,
-            [
-                cfg["batch_size"],
-                cfg["in_steps"],
-                cfg["num_nodes"],
-                next(iter(trainset_loader))[0].shape[-1],
-            ],
-            verbose=0,  # avoid print twice
-        ),
-        log=log,
-    )
+    # print_log(
+    #     summary(
+    #         model,
+    #         [
+    #             cfg["batch_size"],
+    #             cfg["in_steps"],
+    #             cfg["num_nodes"],
+    #             next(iter(trainset_loader))[0].shape[-1],
+    #         ],
+    #         verbose=0,  # avoid print twice
+    #     ),
+    #     log=log,
+    # )
     print_log(log=log)
 
     # --------------------------- train and test model --------------------------- #
