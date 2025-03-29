@@ -225,7 +225,7 @@ if __name__ == "__main__":
 
     seed = torch.randint(1000, (1,))  # set random seed here
     seed_everything(seed.detach().item())
-    set_cpu_num(6)
+    # set_cpu_num(6)
 
     # GPU_ID = args.gpu_num
     # os.environ["CUDA_VISIBLE_DEVICES"] = f"{GPU_ID}"
