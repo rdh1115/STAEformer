@@ -25,6 +25,7 @@ from lib.metrics import RMSE_MAE_MAPE
 from lib.data_prepare import get_dataloaders_from_index_data
 from model.STAEformer import STAEformer
 
+
 # ! X shape: (B, T, N, C)
 
 
@@ -71,7 +72,7 @@ def predict(model, loader):
 
 
 def train_one_epoch(
-    model, trainset_loader, optimizer, scheduler, criterion, clip_grad, log=None
+        model, trainset_loader, optimizer, scheduler, criterion, clip_grad, log=None
 ):
     global cfg, global_iter_count, global_target_length
 
@@ -100,19 +101,19 @@ def train_one_epoch(
 
 
 def train(
-    model,
-    trainset_loader,
-    valset_loader,
-    optimizer,
-    scheduler,
-    criterion,
-    clip_grad=0,
-    max_epochs=200,
-    early_stop=10,
-    verbose=1,
-    plot=False,
-    log=None,
-    save=None,
+        model,
+        trainset_loader,
+        valset_loader,
+        optimizer,
+        scheduler,
+        criterion,
+        clip_grad=0,
+        max_epochs=200,
+        early_stop=10,
+        verbose=1,
+        plot=False,
+        log=None,
+        save=None,
 ):
     model = model.to(DEVICE)
 
@@ -155,8 +156,8 @@ def train(
     train_rmse, train_mae, train_mape = RMSE_MAE_MAPE(*predict(model, trainset_loader))
     val_rmse, val_mae, val_mape = RMSE_MAE_MAPE(*predict(model, valset_loader))
 
-    out_str = f"Early stopping at epoch: {epoch+1}\n"
-    out_str += f"Best at epoch {best_epoch+1}:\n"
+    out_str = f"Early stopping at epoch: {epoch + 1}\n"
+    out_str += f"Best at epoch {best_epoch + 1}:\n"
     out_str += "Train Loss = %.5f\n" % train_loss_list[best_epoch]
     out_str += "Train RMSE = %.5f, MAE = %.5f, MAPE = %.5f\n" % (
         train_rmse,
@@ -219,15 +220,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dataset", type=str, default="pems08")
-    parser.add_argument("-g", "--gpu_num", type=int, default=0)
+    # parser.add_argument("-g", "--gpu_num", type=int, default=0)
     args = parser.parse_args()
 
-    seed = torch.randint(1000, (1,)) # set random seed here
+    seed = torch.randint(1000, (1,))  # set random seed here
     seed_everything(seed.detach().item())
-    set_cpu_num(1)
+    set_cpu_num(6)
 
-    GPU_ID = args.gpu_num
-    os.environ["CUDA_VISIBLE_DEVICES"] = f"{GPU_ID}"
+    # GPU_ID = args.gpu_num
+    # os.environ["CUDA_VISIBLE_DEVICES"] = f"{GPU_ID}"
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     dataset = args.dataset
