@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import datetime
 import time
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 # from torchinfo import summary
 import yaml
 import json
@@ -171,15 +171,6 @@ def train(
         val_mape,
     )
     print_log(out_str, log=log)
-
-    if plot:
-        plt.plot(range(0, epoch + 1), train_loss_list, "-", label="Train Loss")
-        plt.plot(range(0, epoch + 1), val_loss_list, "-", label="Val Loss")
-        plt.title("Epoch-Loss")
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss")
-        plt.legend()
-        plt.show()
 
     if save:
         torch.save(best_state_dict, save)
