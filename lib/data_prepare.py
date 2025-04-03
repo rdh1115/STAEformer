@@ -120,6 +120,9 @@ def get_dataloaders_from_index_data(
         batch_size=64,
         log=None
 ):
+    if 'PEMSBAY' or 'METRLA' in data_dir:
+        split_ratio = (20, 10)
+
     x_train, x_val, x_test, y_train, y_val, y_test, scaler = get_raw_data(
         data_dir,
         split_ratio,
