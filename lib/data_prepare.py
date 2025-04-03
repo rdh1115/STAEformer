@@ -18,6 +18,7 @@ def get_raw_data(dataset_path, split_ratio, n_hist, n_pred, norm):
         data_path = list(Path(dataset_path).glob(f'{split}*_hist{n_hist}_pred{n_pred}.npz'))
 
         if data_path:
+            print(f'Loading {split} data from {data_path[0]}')
             data = np.load(data_path[0])
             X_s.append(data['x'])
             y_s.append(data['y'])

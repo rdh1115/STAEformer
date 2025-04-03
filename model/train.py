@@ -24,6 +24,7 @@ from lib.utils import (
 from lib.metrics import RMSE_MAE_MAPE
 from lib.data_prepare import get_dataloaders_from_index_data
 from model.STAEformer import STAEformer
+from lib.utils import forecasting_acc
 
 
 # ! X shape: (B, T, N, C)
@@ -47,18 +48,25 @@ def eval_model(model, valset_loader, criterion):
 
 
 @torch.no_grad()
-def predict(model, loader):
+def predict(model, loader, device=None, scaler=None):
+    if device is None:
+        device = device
+    if scaler is None:
+        scaler = scaler
+
     model.eval()
     y = []
     out = []
 
-    for x_batch, y_batch in loader:
-        x_batch = x_batch.to(DEVICE)
-        y_batch = y_batch.to(DEVICE)
+    for i, (x_batch, y_batch) in enumerate(loader):
+        if i % 100 == 0:
+            print(f'Predicting {i} batches...')
+        x_batch = x_batch.to(device)
+        y_batch = y_batch.to(device)
 
         out_batch = model(x_batch)
-        SCALER.to_device(DEVICE)
-        out_batch = SCALER.inverse_transform(out_batch)
+        scaler.to_device(device)
+        out_batch = scaler.inverse_transform(out_batch)
 
         out_batch = out_batch.cpu().numpy()
         y_batch = y_batch.cpu().numpy()
@@ -178,15 +186,16 @@ def train(
 
 
 @torch.no_grad()
-def test_model(model, testset_loader, log=None):
+def test_model(model, testset_loader, log=None, device=None, scaler=None):
     model.eval()
     print_log("--------- Test ---------", log=log)
 
     start = time.time()
-    y_true, y_pred = predict(model, testset_loader)
+    y_true, y_pred = predict(model, testset_loader, device, scaler)
     end = time.time()
 
     rmse_all, mae_all, mape_all = RMSE_MAE_MAPE(y_true, y_pred)
+    metrics = forecasting_acc(y_pred, y_true)
     out_str = "All Steps RMSE = %.5f, MAE = %.5f, MAPE = %.5f\n" % (
         rmse_all,
         mae_all,
@@ -203,6 +212,7 @@ def test_model(model, testset_loader, log=None):
         )
 
     print_log(out_str, log=log, end="")
+    print(f'metrics: {metrics}')
     print_log("Inference time: %.2f s" % (end - start), log=log)
 
 
@@ -335,6 +345,6 @@ if __name__ == "__main__":
 
     print_log(f"Saved Model: {save}", log=log)
 
-    test_model(model, testset_loader, log=log)
+    test_model(model, testset_loader, log=log, device=DEVICE, scaler=SCALER)
 
     log.close()

@@ -87,6 +87,44 @@ class MaskedMAELoss:
     def __call__(self, preds, labels, null_val=0.0):
         return masked_mae_loss(preds, labels, null_val)
 
+def forecasting_acc(output, target, target_shape=None):
+    """
+    calculate 3 time-series prediction metric:
+    MAE (Mean Absolute Error), RMSE (Root Mean Squared Error), MAPE (Mean Absolute Percentage Error)
+    mask out values of 0 from target to prevent MAPE from numerical error
+
+    :param output: prediction tensor from model
+    :param target: ground truth tensor
+    :param target_shape: tuple of the shape of target tensor
+    :return:
+    """
+    if target_shape is not None:
+        assert output.shape == target.shape, f'output shape {output.shape} must match target shape {target.shape}'
+
+    output, target = torch.tensor(output), torch.tensor(target)
+    metrics = ['MAE', 'RMSE', 'MAPE']
+    metrics = dict.fromkeys(metrics, None)
+
+    # mask out node values that are zero during evaluation
+    # this avoids MAPE numerical error
+    mask = (target != 0)
+
+    mae = (output - target).abs()
+    mae = mae * mask
+    mae = torch.where(torch.isnan(mae), torch.zeros_like(mae), mae)
+    metrics['MAE'] = mae.mean()
+
+    rmse = (output - target) ** 2
+    rmse = rmse * mask
+    rmse = torch.where(torch.isnan(rmse), torch.zeros_like(rmse), rmse)
+    metrics['RMSE'] = torch.sqrt(rmse.mean())
+
+    mape = ((output - target).abs() / target.abs())
+    mape = mape * mask
+    mape = torch.where(torch.isnan(mape), torch.zeros_like(mape), mape)
+    metrics['MAPE'] = mape.mean()
+    return metrics
+
 
 def print_log(*values, log=None, end="\n"):
     print(*values, end=end)
