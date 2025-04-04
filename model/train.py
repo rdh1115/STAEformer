@@ -31,16 +31,22 @@ from lib.utils import forecasting_acc
 
 
 @torch.no_grad()
-def eval_model(model, valset_loader, criterion):
+def eval_model(
+        model,
+        valset_loader,
+        criterion,
+        device,
+        scaler
+):
     model.eval()
     batch_loss_list = []
     for x_batch, y_batch in valset_loader:
-        x_batch = x_batch.to(DEVICE)
-        y_batch = y_batch.to(DEVICE)
+        x_batch = x_batch.to(device)
+        y_batch = y_batch.to(device)
 
         out_batch = model(x_batch)
-        SCALER.to_device(DEVICE)
-        out_batch = SCALER.inverse_transform(out_batch, )
+        scaler.to_device(device)
+        out_batch = scaler.inverse_transform(out_batch)
         loss = criterion(out_batch, y_batch)
         batch_loss_list.append(loss.item())
 
@@ -48,7 +54,12 @@ def eval_model(model, valset_loader, criterion):
 
 
 @torch.no_grad()
-def predict(model, loader, device=None, scaler=None):
+def predict(
+        model,
+        loader,
+        device=None,
+        scaler=None
+):
     if device is None:
         device = device
     if scaler is None:
@@ -80,18 +91,26 @@ def predict(model, loader, device=None, scaler=None):
 
 
 def train_one_epoch(
-        model, trainset_loader, optimizer, scheduler, criterion, clip_grad, log=None
+        model,
+        trainset_loader,
+        optimizer,
+        scheduler,
+        criterion,
+        clip_grad,
+        log=None,
+        device=None,
+        scaler=None,
 ):
     global cfg, global_iter_count, global_target_length
 
     model.train()
     batch_loss_list = []
     for x_batch, y_batch in trainset_loader:
-        x_batch = x_batch.to(DEVICE)
-        y_batch = y_batch.to(DEVICE)
+        x_batch = x_batch.to(device)
+        y_batch = y_batch.to(device)
         out_batch = model(x_batch)
-        SCALER.to_device(DEVICE)
-        out_batch = SCALER.inverse_transform(out_batch)
+        scaler.to_device(device)
+        out_batch = scaler.inverse_transform(out_batch)
 
         loss = criterion(out_batch, y_batch)
         batch_loss_list.append(loss.item())
@@ -122,8 +141,10 @@ def train(
         plot=False,
         log=None,
         save=None,
+        device=torch.device("cpu"),
+        scaler=None,
 ):
-    model = model.to(DEVICE)
+    model = model.to(device)
 
     wait = 0
     min_val_loss = np.inf
@@ -133,11 +154,12 @@ def train(
 
     for epoch in range(max_epochs):
         train_loss = train_one_epoch(
-            model, trainset_loader, optimizer, scheduler, criterion, clip_grad, log=log
+            model, trainset_loader, optimizer, scheduler, criterion, clip_grad,
+            log=log, device=device, scaler=scaler
         )
         train_loss_list.append(train_loss)
 
-        val_loss = eval_model(model, valset_loader, criterion)
+        val_loss = eval_model(model, valset_loader, criterion, device, scaler)
         val_loss_list.append(val_loss)
 
         if (epoch + 1) % verbose == 0:
@@ -161,8 +183,8 @@ def train(
                 break
 
     model.load_state_dict(best_state_dict)
-    train_rmse, train_mae, train_mape = RMSE_MAE_MAPE(*predict(model, trainset_loader))
-    val_rmse, val_mae, val_mape = RMSE_MAE_MAPE(*predict(model, valset_loader))
+    train_rmse, train_mae, train_mape = RMSE_MAE_MAPE(*predict(model, trainset_loader, device))
+    val_rmse, val_mae, val_mape = RMSE_MAE_MAPE(*predict(model, valset_loader, device))
 
     out_str = f"Early stopping at epoch: {epoch + 1}\n"
     out_str += f"Best at epoch {best_epoch + 1}:\n"
@@ -228,7 +250,7 @@ if __name__ == "__main__":
     seed_everything(seed.detach().item())
     # set_cpu_num(6)
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         print(f"Using GPU: {os.environ['CUDA_VISIBLE_DEVICES']}")
@@ -264,7 +286,7 @@ if __name__ == "__main__":
         trainset_loader,
         valset_loader,
         testset_loader,
-        SCALER,
+        scaler,
     ) = get_dataloaders_from_index_data(
         data_path,
         tod=cfg.get("time_of_day"),
@@ -342,10 +364,12 @@ if __name__ == "__main__":
         verbose=1,
         log=log,
         save=save,
+        device=device,
+        scaler=scaler,
     )
 
     print_log(f"Saved Model: {save}", log=log)
 
-    test_model(model, testset_loader, log=log, device=DEVICE, scaler=SCALER)
+    test_model(model, testset_loader, log=log, device=device, scaler=scaler)
 
     log.close()

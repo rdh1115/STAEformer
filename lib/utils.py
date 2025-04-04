@@ -87,6 +87,7 @@ class MaskedMAELoss:
     def __call__(self, preds, labels, null_val=0.0):
         return masked_mae_loss(preds, labels, null_val)
 
+
 def forecasting_acc(output, target, target_shape=None):
     """
     calculate 3 time-series prediction metric:

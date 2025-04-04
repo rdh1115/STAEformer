@@ -1,5 +1,7 @@
 import torch.nn as nn
 import torch
+
+
 # from torchinfo import summary
 
 
@@ -54,8 +56,8 @@ class AttentionLayer(nn.Module):
         )  # (num_heads * batch_size, ..., head_dim, src_length)
 
         attn_score = (
-            query @ key
-        ) / self.head_dim**0.5  # (num_heads * batch_size, ..., tgt_length, src_length)
+                             query @ key
+                     ) / self.head_dim ** 0.5  # (num_heads * batch_size, ..., tgt_length, src_length)
 
         if self.mask:
             mask = torch.ones(
@@ -76,7 +78,7 @@ class AttentionLayer(nn.Module):
 
 class SelfAttentionLayer(nn.Module):
     def __init__(
-        self, model_dim, feed_forward_dim=2048, num_heads=8, dropout=0, mask=False
+            self, model_dim, feed_forward_dim=2048, num_heads=8, dropout=0, mask=False
     ):
         super().__init__()
 
@@ -110,23 +112,23 @@ class SelfAttentionLayer(nn.Module):
 
 class STAEformer(nn.Module):
     def __init__(
-        self,
-        num_nodes,
-        in_steps=12,
-        out_steps=12,
-        steps_per_day=288,
-        input_dim=3,
-        output_dim=1,
-        input_embedding_dim=24,
-        tod_embedding_dim=24,
-        dow_embedding_dim=24,
-        spatial_embedding_dim=0,
-        adaptive_embedding_dim=80,
-        feed_forward_dim=256,
-        num_heads=4,
-        num_layers=3,
-        dropout=0.1,
-        use_mixed_proj=True,
+            self,
+            num_nodes,
+            in_steps=12,
+            out_steps=12,
+            steps_per_day=288,
+            input_dim=3,
+            output_dim=1,
+            input_embedding_dim=24,
+            tod_embedding_dim=24,
+            dow_embedding_dim=24,
+            spatial_embedding_dim=0,
+            adaptive_embedding_dim=80,
+            feed_forward_dim=256,
+            num_heads=4,
+            num_layers=3,
+            dropout=0.1,
+            use_mixed_proj=True,
     ):
         super().__init__()
 
@@ -142,11 +144,11 @@ class STAEformer(nn.Module):
         self.spatial_embedding_dim = spatial_embedding_dim
         self.adaptive_embedding_dim = adaptive_embedding_dim
         self.model_dim = (
-            input_embedding_dim
-            + tod_embedding_dim
-            + dow_embedding_dim
-            + spatial_embedding_dim
-            + adaptive_embedding_dim
+                input_embedding_dim
+                + tod_embedding_dim
+                + dow_embedding_dim
+                + spatial_embedding_dim
+                + adaptive_embedding_dim
         )
         self.num_heads = num_heads
         self.num_layers = num_layers
@@ -208,7 +210,7 @@ class STAEformer(nn.Module):
             features.append(tod_emb)
         if self.dow_embedding_dim > 0:
             dow_emb = self.dow_embedding(
-                dow.long()
+                dow.long().clamp(0, 6)
             )  # (batch_size, in_steps, num_nodes, dow_embedding_dim)
             features.append(dow_emb)
         if self.spatial_embedding_dim > 0:
