@@ -181,12 +181,15 @@ def train(
             wait += 1
             if wait >= early_stop:
                 break
+    out_str = f"Early stopping at epoch: {epoch + 1}\n"
+    if save:
+        print(f'Saving model to {save}')
+        torch.save(best_state_dict, save)
 
     model.load_state_dict(best_state_dict)
-    train_rmse, train_mae, train_mape = RMSE_MAE_MAPE(*predict(model, trainset_loader, device))
-    val_rmse, val_mae, val_mape = RMSE_MAE_MAPE(*predict(model, valset_loader, device))
+    train_rmse, train_mae, train_mape = RMSE_MAE_MAPE(*predict(model, trainset_loader, device, scaler))
+    val_rmse, val_mae, val_mape = RMSE_MAE_MAPE(*predict(model, valset_loader, device, scaler))
 
-    out_str = f"Early stopping at epoch: {epoch + 1}\n"
     out_str += f"Best at epoch {best_epoch + 1}:\n"
     out_str += "Train Loss = %.5f\n" % train_loss_list[best_epoch]
     out_str += "Train RMSE = %.5f, MAE = %.5f, MAPE = %.5f\n" % (
@@ -201,9 +204,6 @@ def train(
         val_mape,
     )
     print_log(out_str, log=log)
-
-    if save:
-        torch.save(best_state_dict, save)
     return model
 
 
