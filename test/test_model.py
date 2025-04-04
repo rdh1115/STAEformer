@@ -29,6 +29,7 @@ def load_model(model_fp, model):
 class MyTestCase(unittest.TestCase):
     def test_test(self):
         DEVICE = torch.device("cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dataset = "PEMS03"
         dataset = dataset.upper()
         data_path = f"../data/{dataset}"
@@ -48,7 +49,7 @@ class MyTestCase(unittest.TestCase):
         cfg = cfg[dataset]
         model = STAEformer(**cfg["model_args"])
         model = load_model(
-            '/Users/markbai/Documents/GitHub/STAEformer/STAEformer-PEMS03-2025-04-02-13-24-18.pt',
+            '/Users/markbai/Documents/GitHub/STAEformer/STAEformer-PEMS03.pt',
             model
         )
         (

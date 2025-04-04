@@ -101,7 +101,7 @@ def forecasting_acc(output, target, target_shape=None):
     if target_shape is not None:
         assert output.shape == target.shape, f'output shape {output.shape} must match target shape {target.shape}'
 
-    output, target = torch.tensor(output), torch.tensor(target)
+    output, target = torch.tensor(output, dtype=torch.float), torch.tensor(target, dtype=torch.float)
     metrics = ['MAE', 'RMSE', 'MAPE']
     metrics = dict.fromkeys(metrics, None)
 
